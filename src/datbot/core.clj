@@ -45,7 +45,7 @@
        :body (json/write-str {:challenge challenge})}
       {:status 200
        :headers content-type-json
-       :body (-> json handle-bot-mention json/write-str)})))
+       :body (-> (:event json) handle-bot-mention json/write-str)})))
 
 (def slack-event-handler
   (apigw/ionize slack-event-handler*))
