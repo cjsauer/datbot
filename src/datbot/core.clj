@@ -18,7 +18,7 @@
              {:body (json/write-str {:channel channel :text message})
               :content-type :json
               :accept :json
-              :oauth-token "xoxb-4412666713-386381976739-85dPA73sGtkZF2eegytkuSKw"}))
+              :oauth-token (:datbot-oauth-token config)}))
 
 (def content-type-json {"Content-Type" "application/json"})
 (defn read-json
