@@ -5,7 +5,7 @@
     "event": {
         "type": "app_mention",
         "user": "U061F7AUR",
-        "text": "{:tx-data [{:user/name \"datbot\"}]}",
+        "text": "{:query [:find ?e :where [?e :db/ident :seesaw/project] :in $]}",
         "ts": "1515449522.000016",
         "channel": "datbot-testing",
         "event_ts": "1515449522000016"

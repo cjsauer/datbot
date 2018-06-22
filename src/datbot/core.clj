@@ -26,6 +26,8 @@
    :proxy-port 8182})
 
 (def datomic-client (d/client datomic-cfg))
+(d/create-database datomic-client {:db-name (:db-name config)})
+(def conn (d/connect datomic-client {:db-name (:db-name config)}))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -72,6 +74,18 @@
                       (s/explain-data spec x)))
       result)))
 
+(defn- handle-tx-mention
+  [tx-data]
+  (-> (d/transact conn tx-data)
+      pp-str))
+
+(defn- handle-query-mention
+  [query-data]
+  (-> query-data
+      (merge {:args [(d/db conn)]})
+      d/q
+      pp-str))
+
 (defn handle-bot-mention
   [{:keys [text channel] :as message}]
   (try
@@ -79,8 +93,8 @@
           parsed (edn/read-string sanitized-text)
           conformed (conform! ::mention parsed)]
       (case (first conformed)
-        :tx-mention (send-message channel "That was a tx")
-        :query-mention (send-message channel "That was a query"))
+        :tx-mention (send-message channel (-> conformed second handle-tx-mention))
+        :query-mention (send-message channel (-> conformed second handle-query-mention)))
       {:response (pp-str parsed)})
     (catch Exception e
       (send-message channel (-> e ex-data pp-str))
