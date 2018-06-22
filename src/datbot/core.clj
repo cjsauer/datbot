@@ -31,6 +31,11 @@
   [input-stream]
   (-> input-stream io/reader (json/read :key-fn keyword)))
 
+(defn handle-bot-mention
+  [{:keys [text channel] :as message}]
+  (send-message channel text)
+  {:echo text})
+
 (defn slack-event-handler*
   [{:keys [headers body] :as req}]
   (let [json (read-json body)]
@@ -39,7 +44,8 @@
        :headers content-type-json
        :body (json/write-str {:challenge challenge})}
       {:status 200
-       :headers content-type-json})))
+       :headers content-type-json
+       :body (-> json handle-bot-mention json/write-str)})))
 
 (def slack-event-handler
   (apigw/ionize slack-event-handler*))
@@ -51,6 +57,11 @@
   ;; challenge test
   (slack-event-handler* {:headers {:content-type "application/json"}
                          :body (-> (io/resource "fixtures/challenge-body.json")
+                                   (io/input-stream))})
+
+  ;; bot mention test
+  (slack-event-handler* {:headers {:content-type "application/json"}
+                         :body (-> (io/resource "fixtures/mention-body.json")
                                    (io/input-stream))})
 
   )
