@@ -20,14 +20,16 @@
               :accept :json
               :oauth-token "xoxb-4412666713-386381976739-85dPA73sGtkZF2eegytkuSKw"}))
 
+(def content-type-json {"Content-Type" "application/json"})
+
 (defn bot-receive-message*
   [{:keys [headers body] :as req}]
   (if-let [challenge (some-> body (json/read-str :key-fn keyword) :challenge)]
     {:status 200
-     :headers {"Content-Type" "application/json"}
+     :headers content-type-json
      :body (json/write-str {:challenge challenge})}
     {:status 200
-     :body "Hello!"}))
+     :headers content-type-json}))
 
 (def bot-receive-message
   (apigw/ionize bot-receive-message*))
