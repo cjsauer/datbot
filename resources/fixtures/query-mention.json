@@ -1,0 +1,19 @@
+{
+    "token": "ZZZZZZWSxiZZZ2yIvs3peJ",
+    "team_id": "T061EG9R6",
+    "api_app_id": "A0MDYCDME",
+    "event": {
+        "type": "app_mention",
+        "user": "U061F7AUR",
+        "text": "{:query [:find ?e :where [?e :seesaw/project-name \"AC CRM\"] :in $]}",
+        "ts": "1515449522.000016",
+        "channel": "datbot-testing",
+        "event_ts": "1515449522000016"
+    },
+    "type": "event_callback",
+    "event_id": "Ev0LAN670R",
+    "event_time": 1515449522000016,
+    "authed_users": [
+        "U0LAN0Z89"
+    ]
+}

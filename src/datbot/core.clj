@@ -136,9 +136,17 @@
                          :body (-> (io/resource "fixtures/challenge-body.json")
                                    (io/input-stream))})
 
-  ;; bot mention test
+  ;; bot mention tests
   (slack-event-handler* {:headers {:content-type "application/json"}
-                         :body (-> (io/resource "fixtures/mention-body.json")
+                         :body (-> (io/resource "fixtures/tx-mention.json")
+                                   (io/input-stream))})
+
+  (slack-event-handler* {:headers {:content-type "application/json"}
+                         :body (-> (io/resource "fixtures/query-mention.json")
+                                   (io/input-stream))})
+
+  (slack-event-handler* {:headers {:content-type "application/json"}
+                         :body (-> (io/resource "fixtures/pull-mention.json")
                                    (io/input-stream))})
 
   (remove-mentioned-user "<@calvin> Testing")
