@@ -1,8 +1,9 @@
 (ns datbot.core
   (:require [clj-http.client :as http]
+            [clojure.data.json :as json]
             [clojure.java.io :as io]
-            [datomic.ion.lambda.api-gateway :as apigw]
-            [clojure.data.json :as json]))
+            [clojure.string :as string]
+            [datomic.ion.lambda.api-gateway :as apigw]))
 
 (def config
   (-> (io/resource "config.edn")
@@ -31,10 +32,15 @@
   [input-stream]
   (-> input-stream io/reader (json/read :key-fn keyword)))
 
+(defn- remove-mentioned-user
+  [text]
+  (string/trim (string/replace text #"<@[^>]*>" "")))
+
 (defn handle-bot-mention
   [{:keys [text channel] :as message}]
-  (send-message channel text)
-  {:echo text})
+  (let [sanitized-text (remove-mentioned-user text)]
+    (send-message channel sanitized-text)
+    {:echo sanitized-text}))
 
 (defn slack-event-handler*
   [{:keys [headers body] :as req}]
@@ -63,5 +69,7 @@
   (slack-event-handler* {:headers {:content-type "application/json"}
                          :body (-> (io/resource "fixtures/mention-body.json")
                                    (io/input-stream))})
+
+  (remove-mentioned-user "<@calvin> Testing")
 
   )
