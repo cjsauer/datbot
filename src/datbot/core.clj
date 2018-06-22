@@ -57,10 +57,15 @@
 
 (s/def ::tx-data coll?)
 (s/def ::query coll?)
+(s/def ::selector coll?)
+(s/def ::entity #(or (coll? %) (int? %)))
+(s/def ::pull (s/keys :req-un [::selector ::entity]))
 (s/def ::tx-mention (s/keys :req-un [::tx-data]))
 (s/def ::query-mention (s/keys :req-un [::query]))
+(s/def ::pull-mention (s/keys :req-un [::pull]))
 (s/def ::mention (s/or :tx-mention ::tx-mention
-                       :query-mention ::query-mention))
+                       :query-mention ::query-mention
+                       :pull-mention ::pull-mention))
 
 (defn- pp-str
   [d]
@@ -86,6 +91,12 @@
       d/q
       pp-str))
 
+(defn- handle-pull-mention
+  [{:keys [selector entity] :as pull-data}]
+  (let [db (d/db conn)
+        pull-result (d/pull db selector entity)]
+    (pp-str pull-result)))
+
 (defn handle-bot-mention
   [{:keys [text channel] :as message}]
   (try
@@ -94,7 +105,8 @@
           conformed (conform! ::mention parsed)]
       (case (first conformed)
         :tx-mention (send-message channel (-> conformed second handle-tx-mention))
-        :query-mention (send-message channel (-> conformed second handle-query-mention)))
+        :query-mention (send-message channel (-> conformed second handle-query-mention))
+        :pull-mention (send-message channel (-> conformed second :pull handle-pull-mention)))
       {:response (pp-str parsed)})
     (catch Exception e
       (send-message channel (-> e ex-data pp-str))
@@ -130,5 +142,12 @@
                                    (io/input-stream))})
 
   (remove-mentioned-user "<@calvin> Testing")
+
+  ;; some sample schemas
+  (d/transact conn {:tx-data [{:db/ident :seesaw/project-name
+                               :db/valueType :db.type/string
+                               :db/cardinality :db.cardinality/one
+                               :db/unique :db.unique/identity
+                               :db/doc "Names of projects at SeeSaw Labs"}]})
 
   )

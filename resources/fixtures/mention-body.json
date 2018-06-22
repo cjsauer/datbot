@@ -5,7 +5,7 @@
     "event": {
         "type": "app_mention",
         "user": "U061F7AUR",
-        "text": "{:query [:find ?e :where [?e :db/ident :seesaw/project] :in $]}",
+        "text": "{:pull {:entity 32105739531059265 :selector [*]}}",
         "ts": "1515449522.000016",
         "channel": "datbot-testing",
         "event_ts": "1515449522000016"
