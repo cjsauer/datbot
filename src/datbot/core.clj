@@ -2,7 +2,7 @@
   (:require [clj-http.client :as http]
             [clojure.java.io :as io]
             [datomic.ion.lambda.api-gateway :as apigw]
-            [cheshire.core :as json]))
+            [clojure.data.json :as json]))
 
 (def config
   (-> (io/resource "config.edn")
@@ -15,7 +15,7 @@
 (defn send-message
   [channel message]
   (http/post slack-api-post-message-url
-             {:body (json/generate-string {:channel channel :text message})
+             {:body (json/write-str {:channel channel :text message})
               :content-type :json
               :accept :json
               :oauth-token "xoxb-4412666713-386381976739-85dPA73sGtkZF2eegytkuSKw"}))
@@ -24,11 +24,11 @@
 
 (defn bot-receive-message*
   [{:keys [headers body] :as req}]
-  (let [json (json/parse-stream body keyword)]
+  (let [json (json/read body :key-fn keyword)]
     (if-let [challenge (:challenge json)]
       {:status 200
        :headers content-type-json
-       :body (json/generate-string {:challenge challenge})}
+       :body (json/write-str {:challenge challenge})}
       {:status 200
        :headers content-type-json})))
 
