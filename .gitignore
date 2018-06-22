@@ -3,3 +3,4 @@
 target/
 resources/config.edn
 resources/datomic/ion-config.edn
+\.#*
