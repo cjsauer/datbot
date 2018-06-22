@@ -35,6 +35,12 @@
 ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+(def usage
+  (str "Here's a list of example commands that I can handle: \n"
+       "-transact: `{:tx-data [{:seesaw/project-name \"Diet ID\"}]}`\n"
+       "-query: `{:query [:find ?e :where [?e :seesaw/project-name \"Diet ID\"] :in $]}`\n"
+       "-pull: `{:pull {:entity 123456789 :selector [*]}}`"))
+
 (def slack-api-base-url "https://slack.com/api/%s")
 (def slack-api-post-message-url (format slack-api-base-url "chat.postMessage"))
 
@@ -107,11 +113,14 @@
         :tx-mention (send-message channel (-> conformed second handle-tx-mention))
         :query-mention (send-message channel (-> conformed second handle-query-mention))
         :pull-mention (send-message channel (-> conformed second :pull handle-pull-mention)))
-      {:response (pp-str parsed)})
+      {:conformed (pp-str conformed)})
     (catch Exception e
-      (send-message channel (-> e ex-data pp-str))
-      {::anomoly ::anom/incorrect
-       :exception (ex-data e)})))
+      (let [{:keys [val] :as data} (ex-data e)]
+        (if val
+          (send-message channel (-> data pp-str))
+          (send-message channel usage))
+        {::anomoly ::anom/incorrect
+         :explain-data data}))))
 
 (defn slack-event-handler*
   [{:keys [headers body] :as req}]
@@ -147,6 +156,10 @@
 
   (slack-event-handler* {:headers {:content-type "application/json"}
                          :body (-> (io/resource "fixtures/pull-mention.json")
+                                   (io/input-stream))})
+
+  (slack-event-handler* {:headers {:content-type "application/json"}
+                         :body (-> (io/resource "fixtures/empty-mention.json")
                                    (io/input-stream))})
 
   (remove-mentioned-user "<@calvin> Testing")
