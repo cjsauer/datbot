@@ -20,7 +20,8 @@
               :oauth-token "xoxb-4412666713-386381976739-85dPA73sGtkZF2eegytkuSKw"}))
 
 (defn bot-receive-message*
-  [{:keys [headers body]}]
+  [{:keys [headers body] :as req}]
+  (prn req)
   {:status 200
    :headers {"Content-Type" (:content-type headers)}
    :body body})
