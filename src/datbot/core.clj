@@ -21,10 +21,13 @@
               :oauth-token "xoxb-4412666713-386381976739-85dPA73sGtkZF2eegytkuSKw"}))
 
 (def content-type-json {"Content-Type" "application/json"})
+(defn read-json
+  [input-stream]
+  (-> input-stream io/reader (json/read :key-fn keyword)))
 
 (defn bot-receive-message*
   [{:keys [headers body] :as req}]
-  (let [json (json/read body :key-fn keyword)]
+  (let [json (read-json body)]
     (if-let [challenge (:challenge json)]
       {:status 200
        :headers content-type-json
@@ -42,6 +45,6 @@
   ;; challenge test
   (bot-receive-message* {:headers {:content-type "application/json"}
                          :body (-> (io/resource "fixtures/challenge-body.json")
-                                   (io/reader))})
+                                   (io/input-stream))})
 
   )
