@@ -7,15 +7,19 @@
       slurp
       read-string))
 
+(def slack-api-base-url "https://slack.com/api/%s")
+(def slack-api-post-message-url (format slack-api-base-url "chat.postMessage"))
+
 (defn send-message
-  [message]
-  (http/post (:slack-webhook-url config)
-             {:body (format "{\"text\": \"%s\"}" message)
-              :headers {"Content-Type" "application/json"}
-              :accept :json}))
+  [channel message]
+  (http/post slack-api-post-message-url
+             {:body (format "{\"channel\": \"%s\", \"text\": \"%s\"}" channel message)
+              :content-type :json
+              :accept :json
+              :oauth-token "xoxb-4412666713-386381976739-85dPA73sGtkZF2eegytkuSKw"}))
 
 (comment
 
-  (send-message "Hello!")
+  (send-message "datbot-testing" "Hello!")
 
   )
