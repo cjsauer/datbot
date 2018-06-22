@@ -5,9 +5,9 @@
     "event": {
         "type": "app_mention",
         "user": "U061F7AUR",
-        "text": "What is the hour of the pearl, <@U0LAN0Z89>?",
+        "text": "{:tx-data [{:user/name \"datbot\"}]}",
         "ts": "1515449522.000016",
-        "channel": "C0LAN2Q65",
+        "channel": "datbot-testing",
         "event_ts": "1515449522000016"
     },
     "type": "event_callback",

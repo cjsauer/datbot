@@ -1,14 +1,31 @@
 (ns datbot.core
   (:require [clj-http.client :as http]
             [clojure.data.json :as json]
+            [clojure.edn :as edn]
             [clojure.java.io :as io]
+            [clojure.pprint :refer [pprint]]
+            [clojure.spec.alpha :as s]
             [clojure.string :as string]
-            [datomic.ion.lambda.api-gateway :as apigw]))
+            [datomic.client.api :as d]
+            [datomic.ion.lambda.api-gateway :as apigw]
+            [cognitect.anomalies :as anom]))
 
 (def config
   (-> (io/resource "config.edn")
       slurp
       read-string))
+
+(def datomic-system (:datomic-system config))
+(def datomic-region (:datomic-region config))
+(def datomic-cfg
+  {:server-type :ion
+   :region datomic-region
+   :system datomic-system
+   :query-group datomic-system
+   :endpoint (format "http://entry.%s.%s.datomic.net:8182/" datomic-system datomic-region)
+   :proxy-port 8182})
+
+(def datomic-client (d/client datomic-cfg))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -36,11 +53,39 @@
   [text]
   (string/trim (string/replace text #"<@[^>]*>" "")))
 
+(s/def ::tx-data coll?)
+(s/def ::query coll?)
+(s/def ::tx-mention (s/keys :req-un [::tx-data]))
+(s/def ::query-mention (s/keys :req-un [::query]))
+(s/def ::mention (s/or :tx-mention ::tx-mention
+                       :query-mention ::query-mention))
+
+(defn- pp-str
+  [d]
+  (with-out-str (pprint d)))
+
+(defn- conform!
+  [spec x]
+  (let [result (s/conform spec x)]
+    (if (= ::s/invalid result)
+      (throw (ex-info (s/explain spec x)
+                      (s/explain-data spec x)))
+      result)))
+
 (defn handle-bot-mention
   [{:keys [text channel] :as message}]
-  (let [sanitized-text (remove-mentioned-user text)]
-    (send-message channel sanitized-text)
-    {:echo sanitized-text}))
+  (try
+    (let [sanitized-text (remove-mentioned-user text)
+          parsed (edn/read-string sanitized-text)
+          conformed (conform! ::mention parsed)]
+      (case (first conformed)
+        :tx-mention (send-message channel "That was a tx")
+        :query-mention (send-message channel "That was a query"))
+      {:response (pp-str parsed)})
+    (catch Exception e
+      (send-message channel (-> e ex-data pp-str))
+      {::anomoly ::anom/incorrect
+       :exception (ex-data e)})))
 
 (defn slack-event-handler*
   [{:keys [headers body] :as req}]

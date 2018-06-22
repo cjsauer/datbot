@@ -1,1 +1,3 @@
-{:datbot-oauth-token "xoxb-XXXXXXX"}
+{:datbot-oauth-token "xoxb-YOUR_BOT_OAUTH_TOKEN"
+ :datomic-system "YOUR_SYSTEM_NAME"
+ :datomic-region "YOUR_AWS_REGION"}
