@@ -22,7 +22,7 @@
 
 (defn bot-receive-message*
   [{:keys [headers body] :as req}]
-  (if-let [challenge (:challenge body)]
+  (if-let [challenge (some-> body (json/read-str :key-fn keyword) :challenge)]
     {:status 200
      :headers {"Content-Type" "application/json"}
      :body (json/write-str {:challenge challenge})}
@@ -37,6 +37,6 @@
   (send-message "datbot-testing" "Hello!")
 
   (bot-receive-message* {:headers {:content-type "application/json"}
-                         :body {:challenge "TEST-CHALLENGE"}})
+                         :body (json/write-str {:challenge "TEST-CHALLENGE"})})
 
   )
