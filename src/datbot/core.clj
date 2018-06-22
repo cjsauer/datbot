@@ -9,6 +9,12 @@
       slurp
       read-string))
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
+;; Slack
+;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
 (def slack-api-base-url "https://slack.com/api/%s")
 (def slack-api-post-message-url (format slack-api-base-url "chat.postMessage"))
 
@@ -25,7 +31,7 @@
   [input-stream]
   (-> input-stream io/reader (json/read :key-fn keyword)))
 
-(defn bot-receive-message*
+(defn slack-event-handler*
   [{:keys [headers body] :as req}]
   (let [json (read-json body)]
     (if-let [challenge (:challenge json)]
@@ -35,15 +41,15 @@
       {:status 200
        :headers content-type-json})))
 
-(def bot-receive-message
-  (apigw/ionize bot-receive-message*))
+(def slack-event-handler
+  (apigw/ionize slack-event-handler*))
 
 (comment
 
   (send-message "datbot-testing" "Hello!")
 
   ;; challenge test
-  (bot-receive-message* {:headers {:content-type "application/json"}
+  (slack-event-handler* {:headers {:content-type "application/json"}
                          :body (-> (io/resource "fixtures/challenge-body.json")
                                    (io/input-stream))})
 
