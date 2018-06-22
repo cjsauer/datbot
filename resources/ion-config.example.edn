@@ -1,0 +1,6 @@
+{:allow [datbot.core/bot-receive-message]
+ :lambdas {:datbot-receive-message
+           {:fn datbot.core/bot-receive-message
+            :integration :api-gateway/proxy
+            :description "Called upon mention of @datbot within Slack via the Events API"}}
+ :app-name "YOUR_DATOMIC_SYSTEM_NAME"}

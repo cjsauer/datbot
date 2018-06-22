@@ -1,6 +1,7 @@
 (ns datbot.core
-  (:require [clojure.java.io :as io]
-            [clj-http.client :as http]))
+  (:require [clj-http.client :as http]
+            [clojure.java.io :as io]
+            [datomic.ion.lambda.api-gateway :as apigw]))
 
 (def config
   (-> (io/resource "config.edn")
@@ -18,8 +19,21 @@
               :accept :json
               :oauth-token "xoxb-4412666713-386381976739-85dPA73sGtkZF2eegytkuSKw"}))
 
+(defn bot-receive-message*
+  [{:keys [headers body]}]
+  {:status 200
+   :headers {"Content-Type" (:content-type headers)}
+   :body body})
+
+(def bot-receive-message
+  (apigw/ionize bot-receive-message*))
+
 (comment
 
   (send-message "datbot-testing" "Hello!")
+
+  (bot-receive-message* {:headers {:content-type "application/json"}
+                         :body "{\"test\": \"Whoop!\"}"})
+
 
   )

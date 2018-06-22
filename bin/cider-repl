@@ -1,0 +1,1 @@
+clj -A:cider:dev -e '(require (quote cider-nrepl.main)) (cider-nrepl.main/init ["cider.nrepl/cider-middleware" "refactor-nrepl.middleware/wrap-refactor"])'
