@@ -2,7 +2,7 @@
 
  :deps {org.clojure/clojure {:mvn/version "1.9.0"}
         com.datomic/ion {:mvn/version "0.9.7"}
-        org.clojure/data.json {:mvn/version "0.2.6"}
+        cheshire {:mvn/version "5.8.0"}
         clj-http {:mvn/version "3.9.0"}}
 
  :mvn/repos {"datomic-cloud" {:url "s3://datomic-releases-1fc2183a/maven/releases"}}

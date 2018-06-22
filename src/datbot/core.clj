@@ -2,7 +2,7 @@
   (:require [clj-http.client :as http]
             [clojure.java.io :as io]
             [datomic.ion.lambda.api-gateway :as apigw]
-            [clojure.data.json :as json]))
+            [cheshire.core :as json]))
 
 (def config
   (-> (io/resource "config.edn")
@@ -15,7 +15,7 @@
 (defn send-message
   [channel message]
   (http/post slack-api-post-message-url
-             {:body (json/write-str {:channel channel :text message})
+             {:body (json/generate-string {:channel channel :text message})
               :content-type :json
               :accept :json
               :oauth-token "xoxb-4412666713-386381976739-85dPA73sGtkZF2eegytkuSKw"}))
@@ -24,12 +24,13 @@
 
 (defn bot-receive-message*
   [{:keys [headers body] :as req}]
-  (if-let [challenge (some-> body (json/read-str :key-fn keyword) :challenge)]
-    {:status 200
-     :headers content-type-json
-     :body (json/write-str {:challenge challenge})}
-    {:status 200
-     :headers content-type-json}))
+  (let [json (json/parse-stream body keyword)]
+    (if-let [challenge (:challenge json)]
+      {:status 200
+       :headers content-type-json
+       :body (json/generate-string {:challenge challenge})}
+      {:status 200
+       :headers content-type-json})))
 
 (def bot-receive-message
   (apigw/ionize bot-receive-message*))
@@ -38,7 +39,9 @@
 
   (send-message "datbot-testing" "Hello!")
 
+  ;; challenge test
   (bot-receive-message* {:headers {:content-type "application/json"}
-                         :body (json/write-str {:challenge "TEST-CHALLENGE"})})
+                         :body (-> (io/resource "fixtures/challenge-body.json")
+                                   (io/reader))})
 
   )
