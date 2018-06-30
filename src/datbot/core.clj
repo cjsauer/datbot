@@ -108,23 +108,23 @@
 
 (defn handle-bot-mention
   [{:keys [text channel] :as message}]
-  (if (empty? text)
-    (send-message channel usage)
-    (try
-      (let [sanitized-text (sanitize-message-text text)
-            parsed (edn/read-string sanitized-text)
-            conformed (conform! ::mention parsed)]
-        (case (first conformed)
-          :tx-mention (send-message channel (-> conformed second handle-tx-mention))
-          :query-mention (send-message channel (-> conformed second handle-query-mention))
-          :pull-mention (send-message channel (-> conformed second :pull handle-pull-mention)))
-        {:conformed (pp-str conformed)})
-      (catch Exception e
-        (let [{:keys [val] :as data} (ex-data e)]
-          (if val
-            (send-message channel (-> data pp-str))
-            (send-message channel (.getMessage e)))
-          (println e))))))
+  (let [sanitized-text (sanitize-message-text text)]
+   (if (empty? sanitized-text)
+     (send-message channel usage)
+     (try
+       (let [parsed (edn/read-string sanitized-text)
+             conformed (conform! ::mention parsed)]
+         (case (first conformed)
+           :tx-mention (send-message channel (-> conformed second handle-tx-mention))
+           :query-mention (send-message channel (-> conformed second handle-query-mention))
+           :pull-mention (send-message channel (-> conformed second :pull handle-pull-mention)))
+         {:conformed (pp-str conformed)})
+       (catch Exception e
+         (let [{:keys [val] :as data} (ex-data e)]
+           (if val
+             (send-message channel (-> data pp-str))
+             (send-message channel (.getMessage e)))
+           (println e)))))))
 
 (defn slack-event-handler*
   [{:keys [headers body] :as req}]
