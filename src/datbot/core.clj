@@ -117,11 +117,10 @@
          (case (first conformed)
            :tx-mention (send-message channel (-> conformed second handle-tx-mention))
            :query-mention (send-message channel (-> conformed second handle-query-mention))
-           :pull-mention (send-message channel (-> conformed second :pull handle-pull-mention)))
-         {:conformed (pp-str conformed)})
+           :pull-mention (send-message channel (-> conformed second :pull handle-pull-mention))))
        (catch Exception e
-         (let [{:keys [val] :as data} (ex-data e)]
-           (if val
+         (let [{:clojure.spec.alpha/keys [problems] :as data} (ex-data e)]
+           (if problems
              (send-message channel (-> data pp-str))
              (send-message channel (.getMessage e)))
            (println e)))))))
@@ -135,7 +134,11 @@
        :body (json/write-str {:challenge challenge})}
       {:status 200
        :headers content-type-json
-       :body (-> (:event json) handle-bot-mention json/write-str)})))
+       :body
+       (do
+         (-> (:event json)
+             handle-bot-mention)
+         "ok")})))
 
 (def slack-event-handler
   (apigw/ionize slack-event-handler*))
