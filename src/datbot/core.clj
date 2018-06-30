@@ -57,10 +57,6 @@
   [input-stream]
   (-> input-stream io/reader (json/read :key-fn keyword)))
 
-(defn- remove-mentioned-user
-  [text]
-  (string/trim (string/replace text #"<@[^>]*>" "")))
-
 (s/def ::tx-data coll?)
 (s/def ::query coll?)
 (s/def ::selector coll?)
@@ -103,24 +99,32 @@
         pull-result (d/pull db selector entity)]
     (pp-str pull-result)))
 
+(defn- sanitize-message-text
+  [text]
+  (-> text
+      (string/replace #"<@[^>]*>" "")  ;; remove the mention (i.e. @datbot)
+      (string/replace #"[“”]" "\"")    ;; normalize quotations
+      string/trim))
+
 (defn handle-bot-mention
   [{:keys [text channel] :as message}]
-  (try
-    (let [sanitized-text (remove-mentioned-user text)
-          parsed (edn/read-string sanitized-text)
-          conformed (conform! ::mention parsed)]
-      (case (first conformed)
-        :tx-mention (send-message channel (-> conformed second handle-tx-mention))
-        :query-mention (send-message channel (-> conformed second handle-query-mention))
-        :pull-mention (send-message channel (-> conformed second :pull handle-pull-mention)))
-      {:conformed (pp-str conformed)})
-    (catch Exception e
-      (let [{:keys [val] :as data} (ex-data e)]
-        (if val
-          (send-message channel (-> data pp-str))
-          (send-message channel usage))
-        {::anomoly ::anom/incorrect
-         :explain-data data}))))
+  (if (empty? text)
+    (send-message channel usage)
+    (try
+      (let [sanitized-text (sanitize-message-text text)
+            parsed (edn/read-string sanitized-text)
+            conformed (conform! ::mention parsed)]
+        (case (first conformed)
+          :tx-mention (send-message channel (-> conformed second handle-tx-mention))
+          :query-mention (send-message channel (-> conformed second handle-query-mention))
+          :pull-mention (send-message channel (-> conformed second :pull handle-pull-mention)))
+        {:conformed (pp-str conformed)})
+      (catch Exception e
+        (let [{:keys [val] :as data} (ex-data e)]
+          (if val
+            (send-message channel (-> data pp-str))
+            (send-message channel (.getMessage e)))
+          (println e))))))
 
 (defn slack-event-handler*
   [{:keys [headers body] :as req}]
