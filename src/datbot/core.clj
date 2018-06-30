@@ -166,7 +166,7 @@
                          :body (-> (io/resource "fixtures/empty-mention.json")
                                    (io/input-stream))})
 
-  (remove-mentioned-user "<@calvin> Testing")
+  (sanitize-message-text "<@calvin> “Testing”")
 
   ;; some sample schemas
   (d/transact conn {:tx-data [{:db/ident :seesaw/project-name
